@@ -79,7 +79,22 @@ def main():
             x, y, r = dartboard
             dart_positions = detect_darts(frame, (x, y), r)
             scores = calculate_score(dart_positions, (x, y), r)
-            print("Dart Scores:", scores)
+
+            # Display the scores on the image
+            for i, pos in enumerate(dart_positions):
+                cv2.putText(
+                    frame, f"Score: {scores[i]}",
+                    (pos[0] + 10, pos[1] - 10),  # Slightly offset from the dart position
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2
+                )
+
+            # Display total score
+            total_score = sum(scores)
+            cv2.putText(
+                frame, f"Total: {total_score}",
+                (10, 30),  # Top-left corner
+                cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2
+            )
 
         cv2.imshow("Dartboard Detection", frame)
 
@@ -88,6 +103,7 @@ def main():
 
     cap.release()
     cv2.destroyAllWindows()
+
 
 if __name__ == "__main__":
     main()
