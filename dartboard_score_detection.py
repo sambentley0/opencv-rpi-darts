@@ -67,8 +67,13 @@ def calculate_score(dart_positions, dartboard_center, dartboard_radius):
 
 def main():
     # Initialize camera
-    cap = cv2.VideoCapture(0)  # Use 0 for the default camera
+    cap = cv2.VideoCapture(0)
 
+    # Start the Flask server in a separate thread
+    flask_thread_obj = threading.Thread(target=flask_thread, daemon=True)
+    flask_thread_obj.start()
+
+    global scores
     while True:
         ret, frame = cap.read()
         if not ret:
@@ -78,31 +83,15 @@ def main():
         if dartboard:
             x, y, r = dartboard
             dart_positions = detect_darts(frame, (x, y), r)
-            scores = calculate_score(dart_positions, (x, y), r)
-
-            # Display the scores on the image
-            for i, pos in enumerate(dart_positions):
-                cv2.putText(
-                    frame, f"Score: {scores[i]}",
-                    (pos[0] + 10, pos[1] - 10),  # Slightly offset from the dart position
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2
-                )
-
-            # Display total score
-            total_score = sum(scores)
-            cv2.putText(
-                frame, f"Total: {total_score}",
-                (10, 30),  # Top-left corner
-                cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2
-            )
+            scores = calculate_score(dart_positions, (x, y), r)  # Update the global scores
 
         cv2.imshow("Dartboard Detection", frame)
-
         if cv2.waitKey(1) & 0xFF == ord("q"):
             break
 
     cap.release()
     cv2.destroyAllWindows()
+
 
 
 if __name__ == "__main__":
