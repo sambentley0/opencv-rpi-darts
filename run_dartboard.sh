@@ -20,14 +20,9 @@ sudo raspi-config nonint do_camera 0
 echo "Testing camera availability..."
 vcgencmd get_camera || { echo "Camera not detected. Ensure it's connected and enabled."; exit 1; }
 
-# Path to the Python script
-SCRIPT="full_dartboard_score.py"
-
 # Run the Python script
-echo "Starting the Dartboard Score Calculation script..."
-python3 "$SCRIPT"
-
 #!/bin/bash
 cd /opencv-rpi-darts
 git pull origin main
 python3 dartboard_server.py
+echo "Starting the Dartboard Score Calculation script..."
