@@ -26,3 +26,8 @@ SCRIPT="full_dartboard_score.py"
 # Run the Python script
 echo "Starting the Dartboard Score Calculation script..."
 python3 "$SCRIPT"
+
+#!/bin/bash
+cd /opencv-rpi-darts
+git pull origin main
+python3 dartboard_server.py
