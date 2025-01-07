@@ -22,7 +22,6 @@ vcgencmd get_camera || { echo "Camera not detected. Ensure it's connected and en
 
 # Run the Python script
 #!/bin/bash
-cd /opencv-rpi-darts
 git pull origin main
 python3 dartboard_server.py
 echo "Starting the Dartboard Score Calculation script..."
