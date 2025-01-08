@@ -53,12 +53,10 @@ def log_score_to_database(score):
 
 def calculate_score(x, y, center_x, center_y, radius):
     """Calculate the dart score based on dartboard position."""
-    # Calculate polar coordinates relative to dartboard center
     dx, dy = x - center_x, y - center_y
     distance = math.sqrt(dx**2 + dy**2)
     angle = (math.atan2(dy, dx) * 180 / math.pi) % 360
 
-    # Determine score region
     if distance <= 15:  # Bullseye (inner)
         return 50
     elif distance <= 30:  # Bullseye (outer)
@@ -66,7 +64,6 @@ def calculate_score(x, y, center_x, center_y, radius):
     elif distance > radius:  # Outside dartboard
         return 0
     else:
-        # Define score zones by angle
         angle_ranges = [
             (0, 18), (18, 36), (36, 54), (54, 72), (72, 90), (90, 108),
             (108, 126), (126, 144), (144, 162), (162, 180), (180, 198),
@@ -75,7 +72,6 @@ def calculate_score(x, y, center_x, center_y, radius):
         ]
         scores = [6, 13, 4, 18, 1, 20, 5, 12, 9, 14, 11, 8, 16, 7, 19, 3, 17, 2, 15, 10]
 
-        # Find the angle region and corresponding score
         for (start, end), score in zip(angle_ranges, scores):
             if start <= angle < end:
                 if 90 < distance < 100:  # Triple ring
@@ -101,7 +97,7 @@ def detect_dartboard(frame):
     )
     if circles is not None:
         circles = np.round(circles[0, :]).astype("int")
-        return circles[0]  # Return the first detected circle (x, y, radius)
+        return circles[0]
     return None
 
 def detect_dart_hits(previous_frame, current_frame):
@@ -117,13 +113,46 @@ def detect_dart_hits(previous_frame, current_frame):
             hits.append((x + w // 2, y + h // 2))  # Center of the dart hit
     return hits
 
-# Flask routes
+# Flask Routes
 @app.route("/")
 def index():
-    scores = log_score_to_database()
-    return "Web UI Placeholder"
+    """Render the HTML interface for scores."""
+    try:
+        conn = sqlite3.connect(DB_FILE)
+        cursor = conn.cursor()
+        cursor.execute("SELECT score, timestamp FROM scores ORDER BY id DESC LIMIT 10")
+        rows = cursor.fetchall()
+        conn.close()
+    except sqlite3.Error as e:
+        logging.error(f"Error fetching scores: {e}")
+        rows = []
 
-# Main function
+    template = """
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Dartboard Scores</title>
+        <style>
+            body { font-family: Arial, sans-serif; text-align: center; margin: 20px; }
+            table { margin: 0 auto; border-collapse: collapse; width: 50%; }
+            th, td { padding: 10px; border: 1px solid #ddd; }
+            th { background-color: #f4f4f4; }
+        </style>
+    </head>
+    <body>
+        <h1>Dartboard Scores</h1>
+        <table>
+            <tr><th>Score</th><th>Timestamp</th></tr>
+            {% for score, timestamp in rows %}
+            <tr><td>{{ score }}</td><td>{{ timestamp }}</td></tr>
+            {% endfor %}
+        </table>
+    </body>
+    </html>
+    """
+    return render_template_string(template, rows=rows)
+
+# Main Script
 def main():
     setup_database()
     video_capture = cv2.VideoCapture(0)
@@ -143,7 +172,6 @@ def main():
                 logging.error("Failed to read frame from webcam.")
                 break
 
-            # Detect dartboard
             if dartboard_data is None:
                 dartboard_data = detect_dartboard(frame)
                 if dartboard_data:
@@ -153,7 +181,6 @@ def main():
                     print("No dartboard detected.")
                     continue
 
-            # Detect and calculate scores
             if previous_frame is not None:
                 dart_hits = detect_dart_hits(previous_frame, frame)
                 for (x, y) in dart_hits:
@@ -163,10 +190,8 @@ def main():
 
             previous_frame = frame.copy()
 
-            # Display the frame (optional)
             cv2.imshow("Dartboard Detection", frame)
 
-            # Exit on 'q' key press
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
     finally:
@@ -174,4 +199,11 @@ def main():
         cv2.destroyAllWindows()
 
 if __name__ == "__main__":
+    import threading
+    setup_database()
+
+    # Run the Flask server on a separate thread
+    threading.Thread(target=lambda: app.run(host="0.0.0.0", port=5000, debug=False)).start()
+
+    # Run the main script
     main()
