@@ -8,7 +8,7 @@ from datetime import datetime
 from flask import Flask, render_template_string, jsonify, Response
 
 # Configure output directory
-OUTPUT_DIR = "/home/pi/dartboard_data"  # Change this to your preferred location
+OUTPUT_DIR = "../dartboard_data"  # Change this to your preferred location
 os.makedirs(OUTPUT_DIR, exist_ok=True)  # Create directory if it doesn't exist
 
 # Configure logging
