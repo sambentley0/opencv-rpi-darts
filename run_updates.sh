@@ -10,6 +10,7 @@ sudo apt-get update && sudo apt-get upgrade -y
 
 # Install required dependencies
 echo "Installing required dependencies..."
+sudo apt install python3-picamzero
 sudo apt-get install -y python3 python3-pip python3-opencv sqlite3 libopencv-dev
 pip3 install flask opencv-python opencv-contrib-python --break-system-packages
 
