@@ -13,10 +13,6 @@ echo "Installing required dependencies..."
 sudo apt-get install -y python3 python3-pip python3-opencv sqlite3 libopencv-dev
 pip3 install flask opencv-python opencv-contrib-python --break-system-packages
 
-# Enable the Raspberry Pi Camera
-echo "Enabling Raspberry Pi Camera..."
-sudo raspi-config nonint do_camera 0
-
 # Check for camera availability
 echo "Testing camera availability..."
 vcgencmd get_camera || { echo "Camera not detected. Ensure it's connected and enabled."; exit 1; }
