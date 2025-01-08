@@ -4,7 +4,7 @@ import math
 import sqlite3
 import logging
 from datetime import datetime
-from flask import Flask, render_template_string, jsonify
+from flask import Flask, render_template_string, jsonify, Response
 
 # Configure logging
 logging.basicConfig(
@@ -46,7 +46,6 @@ def log_score_to_database(score):
         cursor.execute("INSERT INTO scores (score, timestamp) VALUES (?, ?)", (score, timestamp))
         conn.commit()
         conn.close()
-        print(f"Logged score: {score} at {timestamp}")
     except sqlite3.Error as e:
         logging.error(f"Error logging score to database: {e}")
         raise
@@ -141,6 +140,7 @@ def index():
     </head>
     <body>
         <h1>Dartboard Scores</h1>
+        <a href="/video_feed">View Live Feed</a>
         <table>
             <tr><th>Score</th><th>Timestamp</th></tr>
             {% for score, timestamp in rows %}
@@ -152,8 +152,26 @@ def index():
     """
     return render_template_string(template, rows=rows)
 
+@app.route("/video_feed")
+def video_feed():
+    """Stream video from the camera."""
+    return Response(generate_video_stream(), mimetype="multipart/x-mixed-replace; boundary=frame")
+
+def generate_video_stream():
+    """Yield frames for video streaming."""
+    global video_capture
+    while True:
+        ret, frame = video_capture.read()
+        if not ret:
+            break
+        _, buffer = cv2.imencode(".jpg", frame)
+        yield (b"--frame\r\nContent-Type: image/jpeg\r\n\r\n" + buffer.tobytes() + b"\r\n")
+
 # Main Script
+video_capture = None
+
 def main():
+    global video_capture
     setup_database()
     video_capture = cv2.VideoCapture(0)
 
@@ -190,13 +208,10 @@ def main():
 
             previous_frame = frame.copy()
 
-            cv2.imshow("Dartboard Detection", frame)
-
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
     finally:
         video_capture.release()
-        cv2.destroyAllWindows()
 
 if __name__ == "__main__":
     import threading
