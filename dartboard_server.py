@@ -1,14 +1,20 @@
 import cv2
 import numpy as np
 import math
+import os
 import sqlite3
 import logging
 from datetime import datetime
 from flask import Flask, render_template_string, jsonify, Response
 
+# Configure output directory
+OUTPUT_DIR = "/home/pi/dartboard_data"  # Change this to your preferred location
+os.makedirs(OUTPUT_DIR, exist_ok=True)  # Create directory if it doesn't exist
+
 # Configure logging
+LOG_FILE = os.path.join(OUTPUT_DIR, "dartboard_score_calc.log")
 logging.basicConfig(
-    filename="dartboard_score_calc.log",
+    filename=LOG_FILE,
     level=logging.ERROR,
     format="%(asctime)s [%(levelname)s] %(message)s"
 )
@@ -17,7 +23,7 @@ logging.basicConfig(
 app = Flask(__name__)
 
 # Database setup
-DB_FILE = "dart_scores.db"
+DB_FILE = os.path.join(OUTPUT_DIR, "dart_scores.db")
 
 def setup_database():
     """Create the database and table if they don't exist."""
